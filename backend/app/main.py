@@ -11,7 +11,7 @@ settings = get_settings()
 allowed_origins = get_allowed_origins()
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title=settings.app_name)
+app = FastAPI(title="Task Manager")
 
 app.add_middleware(
     CORSMiddleware,
