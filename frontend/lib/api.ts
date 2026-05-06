@@ -10,12 +10,9 @@ import type {
   User,
 } from "./types";
 
-// ✅ Production-safe API base
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-if (!API_BASE) {
-  throw new Error("❌ NEXT_PUBLIC_API_BASE_URL is not defined");
-}
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "http://localhost:8000/api";
 
 type ApiOptions = {
   token?: string;
@@ -23,34 +20,56 @@ type ApiOptions = {
   body?: unknown;
 };
 
-async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  options: ApiOptions = {}
+): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
+      ...(options.token
+        ? { Authorization: `Bearer ${options.token}` }
+        : {}),
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: options.body
+      ? JSON.stringify(options.body)
+      : undefined,
     cache: "no-store",
   });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(typeof payload.detail === "string" ? payload.detail : "Request failed");
+    const payload = await response
+      .json()
+      .catch(() => ({ detail: "Request failed" }));
+
+    throw new Error(
+      typeof payload.detail === "string"
+        ? payload.detail
+        : "Request failed"
+    );
   }
 
   return response.json() as Promise<T>;
 }
 
 export const api = {
-  signup(payload: { name: string; email: string; password: string; role: Role }) {
+  signup(payload: {
+    name: string;
+    email: string;
+    password: string;
+    role: Role;
+  }) {
     return request<AuthResponse>("/auth/signup", {
       method: "POST",
       body: payload,
     });
   },
 
-  login(payload: { email: string; password: string }) {
+  login(payload: {
+    email: string;
+    password: string;
+  }) {
     return request<AuthResponse>("/auth/login", {
       method: "POST",
       body: payload,
@@ -77,7 +96,13 @@ export const api = {
     return request<Task[]>("/tasks", { token });
   },
 
-  createProject(token: string, payload: { name: string; description: string }) {
+  createProject(
+    token: string,
+    payload: {
+      name: string;
+      description: string;
+    }
+  ) {
     return request<Project>("/projects", {
       token,
       method: "POST",
@@ -85,7 +110,14 @@ export const api = {
     });
   },
 
-  addMember(token: string, projectId: number, payload: { email: string; role: ProjectRole }) {
+  addMember(
+    token: string,
+    projectId: number,
+    payload: {
+      email: string;
+      role: ProjectRole;
+    }
+  ) {
     return request(`/projects/${projectId}/members`, {
       token,
       method: "POST",
@@ -104,11 +136,14 @@ export const api = {
       assignee_id: number | null;
     }
   ) {
-    return request<Task>(`/projects/${projectId}/tasks`, {
-      token,
-      method: "POST",
-      body: payload,
-    });
+    return request<Task>(
+      `/projects/${projectId}/tasks`,
+      {
+        token,
+        method: "POST",
+        body: payload,
+      }
+    );
   },
 
   updateTask(
